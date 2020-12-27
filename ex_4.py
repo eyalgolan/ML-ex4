@@ -25,7 +25,7 @@ class ModelA(nn.Module):
         x = x.view(-1, self.image_size)
         x = F.relu(self.fc0(x))
         x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
+        x = self.fc2(x)
         return F.log_softmax(x, dim=1)
 
 class ModelB(nn.Module):
@@ -46,7 +46,7 @@ class ModelB(nn.Module):
         x = x.view(-1, self.image_size)
         x = F.relu(self.fc0(x))
         x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
+        x = self.fc2(x)
         return F.log_softmax(x, dim=1)
 
 class ModelC(nn.Module):
@@ -71,7 +71,7 @@ class ModelC(nn.Module):
         x = self.do0(x)
         x = F.relu(self.fc1(x))
         x = self.do1(x)
-        x = F.relu(self.fc2(x))
+        x = self.fc2(x)
         return F.log_softmax(x, dim=1)
 
 class ModelD(nn.Module):
@@ -94,7 +94,7 @@ class ModelD(nn.Module):
         x = x.view(-1, self.image_size)
         x = F.relu(self.bn0(self.fc0(x)))
         x = F.relu(self.bn1(self.fc1(x)))
-        x = F.relu(self.bn2(self.fc2(x)))
+        x = self.bn2(self.fc2(x))
         return F.log_softmax(x, dim=1)
 
 class ModelE(nn.Module):
