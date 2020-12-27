@@ -28,13 +28,34 @@ class ModelA(nn.Module):
         x = F.relu(self.fc2(x))
         return F.log_softmax(x, dim=1)
 
+class ModelB(nn.Module):
+    """
+    Model B - Neural Network with two hidden layers, the first layer should
+    have a size of 100 and the second layer should have a size of 50, both
+    should be followed by ReLU activation function, train this model
+    with ADAM optimizer.
+    """
+    def __init__(self,image_size):
+        super(ModelB, self).__init__()
+        self.image_size = image_size
+        self.fc0 = nn.Linear(image_size, 100)
+        self.fc1 = nn.Linear(100, 50)
+        self.fc2 = nn.Linear(50, 10)
+
+    def forward(self, x):
+        x = x.view(-1, self.image_size)
+        x = F.relu(self.fc0(x))
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        return F.log_softmax(x, dim=1)
+
 class ModelC(nn.Module):
     """
     Model C - Dropout – add dropout layers to model A.
     You should place the dropout on the output of the hidden layers
     """
 
-    def __init__(self,image_size,dropout):
+    def __init__(self,image_size, dropout):
         super(ModelC, self).__init__()
         self.image_size = image_size
         self.fc0 = nn.Linear(image_size, 100)
@@ -130,11 +151,11 @@ class ModelF(nn.Module):
         x = self.fc6(x)
         return F.log_softmax(x, dim=1)
 
-class myNet:
+class NeuralNetwork:
     """
     class that manage the network
     """
-    def __init__(self, model, image_size=28*28,optimizer=optim.SGD,dropout=None, epoch=10, learning_rate=0.40, batch_size=64):
+    def __init__(self, model, image_size=28*28,optimizer=optim.SGD,dropout=None, learning_rate=0.40, batch_size=64):
         """
         init the object
         :param model:  which model to run a,b,c,d or e
@@ -146,17 +167,16 @@ class myNet:
         :param batch_size:
         """
         self.image_size = image_size
-        self.epoch = epoch
+        self.epoch = 10
         self.learning_rate = learning_rate
         self.batch_size = batch_size
         self.print_debug = False
         self.total_loss = []
         self.total_accuracy = []
-        # self.Net = FirstNet(image_size, fc0_size, fc1_size, fc2_size)
         if dropout:
             self.Net = model(image_size,dropout=dropout)
         else:
-            self.Net = model(image_size, 1/2)
+            self.Net = model(image_size)
         self.optimizer = optimizer(self.Net.parameters(), lr=learning_rate)
 
     def step_train(self, train_loader, epoch_i =10):
@@ -274,7 +294,7 @@ def best_Values_for_modelB(train_loader,test_loader):
         print(f"[!]Checking {optimazier_name}")
         for droput in np.arange(0.05, 1, 0.05):
             for lr in np.arange(0.05,1,0.05):
-                net_to_check = myNet(model=ModelB,optimizer=optimazier_func,learning_rate=lr,dropout=droput)
+                net_to_check = NeuralNetwork(model=ModelB,optimizer=optimazier_func,learning_rate=lr,dropout=droput)
                 net_to_check.step_train(train_loader)
                 print(f"[+]test on:lr: {lr} optimaize: {optimazier_name} dropout: {droput}")
                 curr_accuracy = net_to_check.validate(test_loader)
@@ -306,7 +326,7 @@ def best_Values_for_model_without_droupout(train_loader, test_loader, model):
         #     if optimazier_name == "RMSprop":
         #         lr /= 100
         for lr in np.arange(0.005, 0.5, 0.005):
-            net_to_check = myNet(model=model, optimizer=optimazier_func, learning_rate=lr)
+            net_to_check = NeuralNetwork(model=model, optimizer=optimazier_func, learning_rate=lr)
             net_to_check.step_train(train_loader)
             print(f"[+]test on:lr: {lr} optimaize: {optimazier_name}")
             curr_accuracy = net_to_check.validate(test_loader)
@@ -325,13 +345,13 @@ def find_values_for_model(train_loader,test_loader,model):
 
     if model.name() == "ModelB":
         acc, lr, opt ,dropout = best_Values_for_modelB(train_loader, test_loader)
-        net = myNet(model, learning_rate=lr, optimizer=optimazierz[opt],dropout=dropout)
+        net = NeuralNetwork(model, learning_rate=lr, optimizer=optimazierz[opt],dropout=dropout)
 
     else:
         dropout = 1
         acc,lr,opt = best_Values_for_model_without_droupout(train_loader,test_loader,model)
 
-        net = myNet(model, learning_rate=lr, optimizer=optimazierz[opt])
+        net = NeuralNetwork(model, learning_rate=lr, optimizer=optimazierz[opt])
     net.train_and_vaildate(train_loader, test_loader)
     net.showGraphs()
     print(f"[!!!]best_accuracy:{acc},best_lr:{lr},best_optimazier:{opt} dropout:{dropout} ")
@@ -357,7 +377,17 @@ def main():
     test_x_data=np.loadtxt("test_x") / 255
     test_x_data = trans(test_x_data).float()
 
-    net = myNet(model=ModelC, optimizer=optim.Adadelta, learning_rate=0.325)
+    # TODO - for HAGAI - check for each model the best hyper parameters (including the learning rate)
+    # TODO - on order to find the best hyper params you neet to implement lines 391-397 for each of netA-netF
+    netA = NeuralNetwork(model=ModelA, optimizer=optim.SGD, learning_rate=0.325)
+    netB = NeuralNetwork(model=ModelB, optimizer=optim.Adadelta, learning_rate=0.325)
+    netC = NeuralNetwork(model=ModelC, optimizer=optim.SGD, dropout=1/2, learning_rate=0.325)
+    netD = NeuralNetwork(model=ModelD, optimizer=optim.SGD, learning_rate=0.325)
+    netE = NeuralNetwork(model=ModelE, optimizer=optim.SGD, learning_rate=0.325)
+    netF = NeuralNetwork(model=ModelF, optimizer=optim.SGD, learning_rate=0.325)
+
+    # TODO - This is what they chose, but we dont have such a model in our ex (C is with SGD in our ex, not with ADAM)
+    net = NeuralNetwork(model=ModelC, optimizer=optim.Adadelta, dropout=1/2, learning_rate=0.325)
     net.print_debug = False
     net.do_train(train_loader)
     with open("test_y","w") as file:
