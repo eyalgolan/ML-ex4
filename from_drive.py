@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt #TODO REMOVE BEFORE SUBMITTION!
 import torch
 from torchvision import transforms
 from torchvision import datasets
@@ -6,42 +5,66 @@ import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from torch.utils.data import Dataset
 
-class ModelA(nn.Module):
+
+class FirstNet(nn.Module):
     """
-    Model A - Neural Network with two hidden layers,
-    the first layer should have a size of 100 and the second layer
-    should have a size of 50, both should be followed by ReLU activation function.
+    from the presentaion
     """
-    def __init__(self,image_size):
-        super(ModelA, self).__init__()
+    def __init__(self,image_size,fc0_size=128,fc1_size=128,fc2_size=10):
+        super(FirstNet, self).__init__()
         self.image_size = image_size
-        self.fc0 = nn.Linear(image_size, 100)
-        self.fc1 = nn.Linear(100, 50)
-        self.fc2 = nn.Linear(50, 10)
+        self.fc0 = nn.Linear(image_size, fc0_size)
+        self.fc1 = nn.Linear(fc0_size, fc1_size)
+        self.fc2 = nn.Linear(fc1_size, fc2_size)
 
     def forward(self, x):
         x = x.view(-1, self.image_size)
         x = F.relu(self.fc0(x))
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-        return F.log_softmax(x, dim=1)
+        return F.log_softmax(x)
+    @staticmethod
+    def name():
+        return "FirstNet"
 
-class ModelC(nn.Module):
+class ModelA(nn.Module):
     """
-    Model C - Dropout – add dropout layers to model A.
+    Model A - Neural Network with two hidden layers,
+    the ﬁrst layer should have a size of 100 and the second layer
+    should have a size of 50, both should be followed by ReLU activation function.
+    """
+    def __init__(self,image_size,fc0_size=100,fc1_size=50,fc2_size=10):
+        super(ModelA, self).__init__()
+        self.image_size = image_size
+        self.fc0 = nn.Linear(image_size, fc0_size)
+        self.fc1 = nn.Linear(fc0_size, fc1_size)
+        self.fc2 = nn.Linear(fc1_size, fc2_size)
+
+    def forward(self, x):
+        x = x.view(-1, self.image_size)
+        x = F.relu(self.fc0(x))
+        x = F.relu(self.fc1(x))
+        return F.log_softmax(self.fc2(x))
+
+    @staticmethod
+    def name():
+        return "ModelA"
+
+class ModelB(nn.Module):
+    """
+    Model B - Dropout – add dropout layers to model A.
     You should place the dropout on the output of the hidden layers
     """
 
-    def __init__(self,image_size,dropout):
-        super(ModelC, self).__init__()
+    def __init__(self,image_size,dropout,fc0_size=100,fc1_size=50,fc2_size=10):
+        super(ModelB, self).__init__()
         self.image_size = image_size
-        self.fc0 = nn.Linear(image_size, 100)
+        self.fc0 = nn.Linear(image_size, fc0_size)
         self.do0 = nn.Dropout(p=dropout)
-        self.fc1 = nn.Linear(100, 50)
+        self.fc1 = nn.Linear(fc0_size, fc1_size)
         self.do1 = nn.Dropout(p=dropout)
-        self.fc2 = nn.Linear(50, 10)
+        self.fc2 = nn.Linear(fc1_size, fc2_size)
 
 
     def forward(self, x):
@@ -50,38 +73,45 @@ class ModelC(nn.Module):
         x = self.do0(x)
         x = F.relu(self.fc1(x))
         x = self.do1(x)
-        x = F.relu(self.fc2(x))
-        return F.log_softmax(x, dim=1)
+        return F.log_softmax(self.fc2(x))
 
-class ModelD(nn.Module):
+    @staticmethod
+    def name():
+        return "ModelB"
+
+class ModelC(nn.Module):
 
     """
-     Model D - Batch Normalization - add Batch Normalization layers to model A.
-     You should place the Batch Normalization before the activation functions
+     Model C - Batch Normalization - add Batch Normalization layers to model A.
+      You should place the Batch Normalization before the activation functions
+
     """
-    def __init__(self,image_size):
-        super(ModelD, self).__init__()
+    def __init__(self,image_size,fc0_size=100,fc1_size=50,fc2_size=10):
+        super(ModelC, self).__init__()
         self.image_size = image_size
-        self.fc0 = nn.Linear(image_size, 100)
-        self.bn0 = nn.BatchNorm1d(num_features=100)
-        self.fc1 = nn.Linear(100, 50)
-        self.bn1 = nn.BatchNorm1d(num_features=50)
-        self.fc2 = nn.Linear(50, 10)
-        self.bn2 = nn.BatchNorm1d(num_features=10)
+        self.fc0 = nn.Linear(image_size, fc0_size)
+        self.bn0 = nn.BatchNorm1d(num_features=fc0_size)
+        self.fc1 = nn.Linear(fc0_size, fc1_size)
+        self.bn1 = nn.BatchNorm1d(num_features=fc1_size)
+        self.fc2 = nn.Linear(fc1_size, fc2_size)
+        self.bn2 = nn.BatchNorm1d(num_features=fc2_size)
 
     def forward(self, x):
         x = x.view(-1, self.image_size)
         x = F.relu(self.bn0(self.fc0(x)))
         x = F.relu(self.bn1(self.fc1(x)))
-        x = F.relu(self.bn2(self.fc2(x)))
-        return F.log_softmax(x, dim=1)
+        return F.log_softmax(self.bn2 (self.fc2(x)))
 
-class ModelE(nn.Module):
+    @staticmethod
+    def name():
+        return "ModelC"
+
+class ModelD(nn.Module):
     """
-    Model E - Neural Network with ﬁve hidden layers:[128,64,10,10,10] using ReLU .
+    Model D - Neural Network with ﬁve hidden layers:[128,64,10,10,10] using ReLU .
     """
     def __init__(self,image_size):
-        super(ModelE, self).__init__()
+        super(ModelD, self).__init__()
         self.image_size = image_size
         self.fc0 = nn.Linear(image_size, 128)
         self.fc1 = nn.Linear(128, 64)
@@ -99,16 +129,17 @@ class ModelE(nn.Module):
         x = F.relu(self.fc3(x))
         x = F.relu(self.fc4(x))
         x = F.relu(self.fc5(x))
-        x = self.fc6(x)
-        return F.log_softmax(x, dim=1)
 
-class ModelF(nn.Module):
-    """
-    Model F - Neural Network with five hidden layers:[128,64,10,10,10] using
-    Sigmoid.
-    """
+        return F.log_softmax(self.fc6(x))
+
+    @staticmethod
+    def name():
+        return "ModelD"
+
+class ModelE(nn.Module):
     def __init__(self,image_size):
-        super(ModelF, self).__init__()
+        #[128,64,10,10,10]
+        super(ModelE, self).__init__()
         self.image_size = image_size
         self.fc0 = nn.Linear(image_size, 128)
         self.fc1 = nn.Linear(128, 64)
@@ -127,8 +158,11 @@ class ModelF(nn.Module):
         x = F.sigmoid(self.fc3(x))
         x = F.sigmoid(self.fc4(x))
         x = F.sigmoid(self.fc5(x))
-        x = self.fc6(x)
-        return F.log_softmax(x, dim=1)
+        return F.log_softmax(self.fc6(x))
+
+    @staticmethod
+    def name():
+        return "ModelE"
 
 class myNet:
     """
@@ -156,7 +190,7 @@ class myNet:
         if dropout:
             self.Net = model(image_size,dropout=dropout)
         else:
-            self.Net = model(image_size, 1/2)
+            self.Net = model(image_size)
         self.optimizer = optimizer(self.Net.parameters(), lr=learning_rate)
 
     def step_train(self, train_loader, epoch_i =10):
@@ -243,6 +277,7 @@ class myNet:
         show the required graphs
         :return:
         """
+        import matplotlib.pyplot as plt
         plt.plot(range(1,self.epoch+1), self.total_loss, label=f'Loss - {self.Net.name()} ')
         plt.legend(bbox_to_anchor=(1.0, 1.00))
         plt.xlabel('Epoch')
@@ -338,33 +373,37 @@ def find_values_for_model(train_loader,test_loader,model):
 
 
 
-def load_data():
-    trans = transforms.Compose([transforms.ToTensor(),
-                                     transforms.Normalize((0.1307,), (0.3081,))])
+
+transforms = transforms.Compose([transforms.ToTensor(),
+                                 transforms.Normalize((0.1307,), (0.3081,))])
 
 
-    fashion = datasets.FashionMNIST("./data", train=True, download=True,transform=trans)
-    train_set, val_set = torch.utils.data.random_split(fashion, [round(len(fashion)*0.8), len(fashion)-round(len(fashion)*0.8)])
-    train_loader = torch.utils.data.DataLoader(train_set,batch_size=64, shuffle=True)
-    val_loader = torch.utils.data.DataLoader(val_set, batch_size=64, shuffle=False)
-    test_loader = torch.utils.data.DataLoader(val_set,batch_size=64, shuffle=True)
+fashion = datasets.FashionMNIST("./data", train=True, download=True,transform=transforms)
+train_set, val_set = torch.utils.data.random_split(fashion, [round(len(fashion)*0.8), len(fashion)-round(len(fashion)*0.8)])
+train_loader = torch.utils.data.DataLoader(train_set,batch_size=64, shuffle=True)
+test_loader = torch.utils.data.DataLoader(val_set,batch_size=64, shuffle=True)
 
-    return train_loader, val_loader, trans, test_loader
+# train_loader = torch.utils.data.DataLoader(datasets.FashionMNIST("./data", train=True, download=True,
+#                                                           transform=transforms),batch_size=64, shuffle=True)
+# #
+# test_loader = torch.utils.data.DataLoader(datasets.FashionMNIST ("./data", train=False,
+#                                                          transform=transforms),batch_size=64, shuffle=True)
+
+# find_values_for_model(train_loader,test_loader,ModelC)
+
+# net = myNet(ModelB, learning_rate=0.85, optimizer=optim.Adadelta, dropout=0.1)
+# net.train_and_vaildate(train_loader, test_loader)
+# net.showGraphs()
 
 # load the test set
-def main():
-    train_loader, val_loader, trans, test_loader = load_data()
-    test_x_data=np.loadtxt("test_x") / 255
-    test_x_data = trans(test_x_data).float()
+test_x_data=np.loadtxt("test_x") / 255
+test_x_data = transforms(test_x_data).float()
 
-    net = myNet(model=ModelC, optimizer=optim.Adadelta, learning_rate=0.325)
-    net.print_debug = False
-    net.do_train(train_loader)
-    with open("test_y","w") as file:
-        for test_input in test_x_data[0]:
-            predict_class = net.test(test_input)
-            file.write(str(int(predict_class)))
-            file.write("\n")
-
-if __name__ == "__main__":
-    main()
+net = myNet(model=ModelC, optimizer=optim.Adadelta, learning_rate=0.325)
+net.print_debug = False
+net.do_train(train_loader)
+with open("test_y","w") as file:
+    for test_input in test_x_data[0]:
+        predict_class = net.test(test_input)
+        file.write(str(int(predict_class)))
+        file.write("\n")
