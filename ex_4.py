@@ -437,11 +437,19 @@ def find_parameters(train_loader, test_loader):
 # load the test set
 def main():
     train_loader, val_loader, trans, test_loader = load_data()
+    test_x_data = np.loadtxt("test_x") / 255
+    test_x_data = trans(test_x_data).float()
 
     # find_parameters(train_loader, test_loader)
 
-    netD = NeuralNetwork(model=ModelD, optimizer=optim.SGD, learning_rate=0.01)
-    netD.train_and_vaildate(train_loader, test_loader)
+    net = NeuralNetwork(model=ModelD, optimizer=optim.SGD, learning_rate=0.01)
+    net.print_debug = False
+    net.do_train(train_loader)
+    with open("test_y", "w") as file:
+        for test_input in test_x_data[0]:
+            predict_class = net.test(test_input)
+            file.write(str(int(predict_class)))
+            file.write("\n")
 
 
 if __name__ == "__main__":
