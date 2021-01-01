@@ -411,7 +411,7 @@ def find_parameters(train_loader, test_loader):
     netD.print_debug = True
     netE = NeuralNetwork(model=ModelE, optimizer=optim.SGD, learning_rate=0.01)
     netE.print_debug = True
-    netF = NeuralNetwork(model=ModelF, optimizer=optim.SGD, learning_rate=0.325)
+    netF = NeuralNetwork(model=ModelF, optimizer=optim.Adam, learning_rate=0.0094)
     netF.print_debug = True
 
     threads = []
