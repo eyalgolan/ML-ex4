@@ -1,7 +1,5 @@
-import matplotlib.pyplot as plt  # TODO REMOVE BEFORE SUBMITTION!
+import matplotlib.pyplot as plt
 import torch
-import threading
-from numpy.random.mtrand import shuffle
 from torch.utils.data.sampler import SubsetRandomSampler
 from torchvision import transforms
 from torchvision import datasets
@@ -9,7 +7,6 @@ import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from torch.utils.data import Dataset
 
 
 class ModelA(nn.Module):
@@ -176,12 +173,12 @@ class NeuralNetwork:
         :param image_size:
         :param optimizer: which oprimaizer to run
         :param dropout: if it use dropout, the dropout rate
-        :param epoch:
+        :param epoch: number of epochs
         :param learning_rate:
         :param batch_size:
         """
         self.image_size = image_size
-        self.epoch = 10  # 10
+        self.epoch = 10
         self.learning_rate = learning_rate
         self.batch_size = batch_size
         self.print_debug = False
@@ -211,12 +208,6 @@ class NeuralNetwork:
             self.until_now = batch_idx * self.batch_size
             self.data_set_len = len(train_loader.dataset)
             total_loss += loss
-        loss = total_loss / len(train_loader)
-        a = f"\t epoch: {epoch_i}, train loss: {loss}"
-        if 0:
-            print(a)
-
-        return a
 
     def validate(self, test_loader):
         """
@@ -241,10 +232,6 @@ class NeuralNetwork:
             total_curr += curr_accuracy
             self.total_loss.append(test_loss)
             self.total_accuracy.append(curr_accuracy)
-        a = "\tModel: {}, test loss: {:.4f}, curr: {:.0f}%".format(
-            str(self.Net)[5], (total_loss / len(test_loader)), total_curr)
-        # print(a)
-        return a
 
     def train_and_vaildate(self, train_loader, test_loader):
         """
@@ -253,13 +240,9 @@ class NeuralNetwork:
         :param test_loader:
         :return:
         """
-        summary = ""
         for epoch_i in range(self.epoch):
-            # print(f"[!]Train Epoch: {epoch_i}")
-            a = self.step_train(train_loader, epoch_i)
-            b = self.validate(test_loader)
-            summary += b + a + "\n"
-        print(summary)
+            self.step_train(train_loader, epoch_i)
+            self.validate(test_loader)
 
     def do_train(self, train_loader):
         """
@@ -269,7 +252,6 @@ class NeuralNetwork:
         :return:
         """
         for epoch_i in range(self.epoch):
-            # print(f"[!]Train Epoch: {epoch_i}")
             self.step_train(train_loader, epoch_i)
 
     def test(self, test_input):
@@ -281,107 +263,6 @@ class NeuralNetwork:
         self.Net.eval()
         with torch.no_grad():
             return self.Net(test_input).argmax()
-
-    def showGraphs(self):
-        """
-        show the required graphs
-        :return:
-        """
-        plt.plot(range(1, self.epoch + 1), self.total_loss, label=f'Loss - {self.Net.name()} ')
-        plt.legend(bbox_to_anchor=(1.0, 1.00))
-        plt.xlabel('Epoch')
-        plt.ylabel('Loss')
-        # plt.xticks(plt_learning)
-        plt.show()
-
-        plt.plot(range(1, self.epoch + 1), self.total_accuracy, label=f'Accuracy - {self.Net.name()} ')
-        plt.legend(bbox_to_anchor=(1.0, 1.00))
-        plt.xlabel('Epoch')
-        plt.ylabel('Accuracy')
-        # plt.xticks(plt_learning)
-        plt.show()
-
-
-def best_Values_for_modelB(train_loader, test_loader):
-    """
-    find the best args for model ModelB
-    :param train_loader:
-    :param test_loader:
-    :return:
-    """
-    best_accuracy = 0
-    best_lr = 0
-    best_optimazier = ""
-    best_droput = 0
-    optimazierz = {"SGD": optim.SGD, "ADAM": optim.Adam, "RMSprop": optim.RMSprop, "AdaDelta": optim.Adadelta}
-    for optimazier_name, optimazier_func in optimazierz.items():
-        # (f"[!]Checking {optimazier_name}")
-        for droput in np.arange(0.05, 1, 0.05):
-            for lr in np.arange(0.05, 1, 0.05):
-                net_to_check = NeuralNetwork(model=ModelB, optimizer=optimazier_func, learning_rate=lr, dropout=droput)
-                net_to_check.step_train(train_loader)
-                print(f"[+]test on:lr: {lr} optimaize: {optimazier_name} dropout: {droput}")
-                curr_accuracy = net_to_check.validate(test_loader)
-                if best_accuracy < curr_accuracy:
-                    best_accuracy = curr_accuracy
-                    best_lr = lr
-                    best_optimazier = optimazier_name
-                    best_droput = droput
-                    # print(
-                    #    f"[!!!]found better parrams:  accuracy: {best_accuracy} lr: {lr} optimaize: {best_optimazier} dropout: {droput}")
-    # (best_accuracy, best_lr, best_optimazier, best_droput)
-    return (best_accuracy, best_lr, best_optimazier, best_droput)
-
-
-def best_Values_for_model_without_droupout(train_loader, test_loader, model):
-    """
-    find the best args for the models
-    :param train_loader:
-    :param test_loader:
-    :param model: the model to run
-    :return:
-    """
-    best_accuracy = 0
-    best_lr = 0
-    best_optimazier = ""
-    optimazierz = {"SGD": optim.SGD, "ADAM": optim.Adam, "RMSprop": optim.RMSprop, "AdaDelta": optim.Adadelta}
-    for optimazier_name, optimazier_func in optimazierz.items():
-        print(f"[!]Checking {optimazier_name}")
-        # for lr in np.arange(0.05,1,0.05):
-        #     if optimazier_name == "RMSprop":
-        #         lr /= 100
-        for lr in np.arange(0.005, 0.5, 0.005):
-            net_to_check = NeuralNetwork(model=model, optimizer=optimazier_func, learning_rate=lr)
-            net_to_check.step_train(train_loader)
-            print(f"[+]test on:lr: {lr} optimaize: {optimazier_name}")
-            curr_accuracy = net_to_check.validate(test_loader)
-            if best_accuracy < curr_accuracy:
-                best_accuracy = curr_accuracy
-                best_lr = lr
-                best_optimazier = optimazier_name
-                # print(f"[!!!]found better parrams:  accuracy: {best_accuracy} lr: {lr} optimaize: {best_optimazier} ")
-    # print(best_accuracy, best_lr, best_optimazier)
-    return best_accuracy, best_lr, best_optimazier
-
-
-# best_Values_for_modelB(train_loader,test_loader)
-
-def find_values_for_model(train_loader, test_loader, model):
-    optimazierz = {"SGD": optim.SGD, "ADAM": optim.Adam, "RMSprop": optim.RMSprop, "AdaDelta": optim.Adadelta}
-    # print(f"[+]testing model: {model.name}")
-
-    if model.name == "ModelB":
-        acc, lr, opt, dropout = best_Values_for_modelB(train_loader, test_loader)
-        net = NeuralNetwork(model, learning_rate=lr, optimizer=optimazierz[opt], dropout=dropout)
-
-    else:
-        dropout = 1
-        acc, lr, opt = best_Values_for_model_without_droupout(train_loader, test_loader, model)
-
-        net = NeuralNetwork(model, learning_rate=lr, optimizer=optimazierz[opt])
-    net.train_and_vaildate(train_loader, test_loader)
-    net.showGraphs()
-    # print(f"[!!!]best_accuracy:{acc},best_lr:{lr},best_optimazier:{opt} dropout:{dropout} ")
 
 
 def load_data():
@@ -398,56 +279,23 @@ def load_data():
     return train_loader, val_loader, trans, test_loader
 
 
-def find_parameters(train_loader, test_loader):
-    # TODO - for HAGAI - check for each model the best hyper parameters (including the learning rate)
-    # TODO - on order to find the best hyper params you neet to implement lines 391-397 for each of netA-netF
-    netA = NeuralNetwork(model=ModelA, optimizer=optim.SGD, learning_rate=0.325)
-    netA.print_debug = True
-    netB = NeuralNetwork(model=ModelB, optimizer=optim.Adadelta, learning_rate=0.038)
-    netB.print_debug = True
-    netC = NeuralNetwork(model=ModelC, optimizer=optim.SGD, dropout=1 / 2, learning_rate=0.1)
-    netC.print_debug = True
-    netD = NeuralNetwork(model=ModelD, optimizer=optim.SGD, learning_rate=0.01)
-    netD.print_debug = True
-    netE = NeuralNetwork(model=ModelE, optimizer=optim.SGD, learning_rate=0.01)
-    netE.print_debug = True
-    netF = NeuralNetwork(model=ModelF, optimizer=optim.Adam, learning_rate=0.0094)
-    netF.print_debug = True
-
-    threads = []
-    args = (train_loader, test_loader)
-    try:
-        # threads.append(threading.Thread(target=netA.train_and_vaildate, args=args))
-        # threads.append(threading.Thread(target=netB.train_and_vaildate, args=args))
-        # threads.append(threading.Thread(target=netC.train_and_vaildate, args=args))
-        # threads.append(threading.Thread(target=netD.train_and_vaildate, args=args))
-        # threads.append(threading.Thread(target=netE.train_and_vaildate, args=args))
-        # threads.append(threading.Thread(target=netF.train_and_vaildate, args=args))
-
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
-    except:
-        print("error")
-
-    a = 0
-
-
-# load the test set
 def main():
     train_loader, val_loader, trans, test_loader = load_data()
     test_x_data = np.loadtxt("test_x") / 255
     test_x_data = trans(test_x_data).float()
 
-    # find_parameters(train_loader, test_loader)
+    netA = NeuralNetwork(model=ModelA, optimizer=optim.SGD, learning_rate=0.325)
+    netB = NeuralNetwork(model=ModelB, optimizer=optim.Adadelta, learning_rate=0.038)
+    netC = NeuralNetwork(model=ModelC, optimizer=optim.SGD, dropout=1 / 2, learning_rate=0.1)
+    netD = NeuralNetwork(model=ModelD, optimizer=optim.SGD, learning_rate=0.01)
+    netE = NeuralNetwork(model=ModelE, optimizer=optim.SGD, learning_rate=0.01)
+    netF = NeuralNetwork(model=ModelF, optimizer=optim.Adam, learning_rate=0.0094)
 
-    net = NeuralNetwork(model=ModelD, optimizer=optim.SGD, learning_rate=0.01)
-    net.print_debug = False
-    net.do_train(train_loader)
+    netD.print_debug = False
+    netD.do_train(train_loader)
     with open("test_y", "w") as file:
         for test_input in test_x_data[0]:
-            predict_class = net.test(test_input)
+            predict_class = netD.test(test_input)
             file.write(str(int(predict_class)))
             file.write("\n")
 
