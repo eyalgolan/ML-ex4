@@ -1,3 +1,4 @@
+import sys
 import torch
 from torch.utils.data.sampler import SubsetRandomSampler
 from torchvision import transforms
@@ -299,8 +300,13 @@ def load_data():
 
 
 def main():
+    # get parameters
+    train_x_file = sys.argv[1]
+    train_y_file = sys.argv[2]
+    test_x_file = sys.argv[3]# should be "test_x"
+
     train_loader, val_loader, trans, test_loader = load_data()
-    test_x_data = np.loadtxt("test_x") / 255
+    test_x_data = np.loadtxt(test_x_file) / 255
     test_x_data = trans(test_x_data).float()
 
     #netA = NeuralNetwork(model=ModelA, optimizer=optim.SGD, learning_rate=0.325)
