@@ -310,7 +310,7 @@ def main():
     test_x_data = trans(test_x_data).float()
 
     #netA = NeuralNetwork(model=ModelA, optimizer=optim.SGD, learning_rate=0.325)
-    #netB = NeuralNetwork(model=ModelB, optimizer=optim.Adadelta, learning_rate=0.038)
+    #netB = NeuralNetwork(model=ModelB, optimizer=optim.Adam, learning_rate=0.038)
     #netC = NeuralNetwork(model=ModelC, optimizer=optim.SGD, dropout=1 / 2, learning_rate=0.1)
     netD = NeuralNetwork(model=ModelD, optimizer=optim.SGD, learning_rate=0.01)
     #netE = NeuralNetwork(model=ModelE, optimizer=optim.SGD, learning_rate=0.01)
